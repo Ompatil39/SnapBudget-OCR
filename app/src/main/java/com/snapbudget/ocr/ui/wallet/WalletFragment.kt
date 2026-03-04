@@ -1,24 +1,39 @@
 package com.snapbudget.ocr.ui.wallet
 
+import android.app.DatePickerDialog
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.text.InputType
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.snapbudget.ocr.R
 import com.snapbudget.ocr.data.db.AppDatabase
 import com.snapbudget.ocr.data.model.Category
+import com.snapbudget.ocr.data.model.Transaction
 import com.snapbudget.ocr.data.repository.TransactionRepository
 import com.snapbudget.ocr.databinding.FragmentWalletBinding
 import com.snapbudget.ocr.util.CurrencyFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.launch
 
 class WalletFragment : Fragment() {
 
@@ -30,6 +45,12 @@ class WalletFragment : Fragment() {
         val repository = TransactionRepository(database.transactionDao())
         val prefs = requireContext().getSharedPreferences("snapbudget_prefs", Context.MODE_PRIVATE)
         WalletViewModel.Factory(repository, prefs)
+    }
+
+    // Keep repository reference for manual bill insertion
+    private val repository: TransactionRepository by lazy {
+        val database = AppDatabase.getDatabase(requireContext())
+        TransactionRepository(database.transactionDao())
     }
 
     override fun onCreateView(
@@ -49,6 +70,7 @@ class WalletFragment : Fragment() {
         binding.btnSetBudget.setOnClickListener { showBudgetDialog() }
         binding.btnEditBudget.setOnClickListener { showBudgetDialog() }
         binding.cardBudgetOverview.setOnClickListener { showBudgetDialog() }
+        binding.fabAddBill.setOnClickListener { showAddBillDialog() }
     }
 
     private fun setupObservers() {
@@ -224,30 +246,165 @@ class WalletFragment : Fragment() {
         }
     }
 
+    // ─── Custom Budget Dialog ───────────────────────────────────────────
     private fun showBudgetDialog() {
-        val input = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            hint = "Enter monthly budget (e.g. 20000)"
-            val currentBudget = viewModel.monthlyBudget.value ?: 0.0
-            if (currentBudget > 0) {
-                setText(currentBudget.toInt().toString())
-                selectAll()
-            }
-            val pad = resources.getDimensionPixelSize(R.dimen.spacing_5)
-            setPadding(pad, pad, pad, pad)
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_set_budget, null)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        // Transparent background so our custom shape shows
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            requestFeature(Window.FEATURE_NO_TITLE)
         }
 
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Set Monthly Budget")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val amount = input.text.toString().toDoubleOrNull() ?: 0.0
-                if (amount > 0) {
-                    viewModel.setMonthlyBudget(amount)
-                }
+        val etAmount = dialogView.findViewById<EditText>(R.id.etBudgetAmount)
+        val btnSave = dialogView.findViewById<MaterialButton>(R.id.btnSaveBudget)
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelBudget)
+        val chip5k = dialogView.findViewById<MaterialButton>(R.id.chip5k)
+        val chip10k = dialogView.findViewById<MaterialButton>(R.id.chip10k)
+        val chip20k = dialogView.findViewById<MaterialButton>(R.id.chip20k)
+        val chip50k = dialogView.findViewById<MaterialButton>(R.id.chip50k)
+
+        // Pre-fill current budget
+        val currentBudget = viewModel.monthlyBudget.value ?: 0.0
+        if (currentBudget > 0) {
+            etAmount.setText(currentBudget.toInt().toString())
+            etAmount.selectAll()
+        }
+
+        // Quick-fill chips
+        chip5k.setOnClickListener { etAmount.setText("5000"); etAmount.setSelection(etAmount.text.length) }
+        chip10k.setOnClickListener { etAmount.setText("10000"); etAmount.setSelection(etAmount.text.length) }
+        chip20k.setOnClickListener { etAmount.setText("20000"); etAmount.setSelection(etAmount.text.length) }
+        chip50k.setOnClickListener { etAmount.setText("50000"); etAmount.setSelection(etAmount.text.length) }
+
+        btnSave.setOnClickListener {
+            val amount = etAmount.text.toString().toDoubleOrNull() ?: 0.0
+            if (amount > 0) {
+                viewModel.setMonthlyBudget(amount)
+                dialog.dismiss()
+            } else {
+                etAmount.error = "Enter a valid amount"
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
+
+        // Make dialog width match parent with margins
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    // ─── Manual Bill Entry Dialog ───────────────────────────────────────
+    private fun showAddBillDialog() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_add_bill, null)
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            requestFeature(Window.FEATURE_NO_TITLE)
+        }
+
+        val etMerchant = dialogView.findViewById<EditText>(R.id.etMerchant)
+        val etAmount = dialogView.findViewById<EditText>(R.id.etAmount)
+        val spinnerCategory = dialogView.findViewById<Spinner>(R.id.spinnerCategory)
+        val tvDate = dialogView.findViewById<TextView>(R.id.tvDate)
+        val etNotes = dialogView.findViewById<EditText>(R.id.etNotes)
+        val btnSave = dialogView.findViewById<MaterialButton>(R.id.btnSaveBill)
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btnCancelBill)
+
+        // Setup category spinner
+        val categories = Category.getAllCategories()
+        val categoryNames = categories.map { it.displayName }
+        val spinnerAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            categoryNames
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        spinnerCategory.adapter = spinnerAdapter
+
+        // Date picker
+        val calendar = Calendar.getInstance()
+        var selectedDate: Date = calendar.time
+        val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        tvDate.text = dateFormat.format(selectedDate)
+
+        tvDate.setOnClickListener {
+            val dpd = DatePickerDialog(
+                requireContext(),
+                R.style.Theme_SnapBudgetOCR, // use dark theme
+                { _, year, month, day ->
+                    calendar.set(year, month, day)
+                    selectedDate = calendar.time
+                    tvDate.text = dateFormat.format(selectedDate)
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+            dpd.datePicker.maxDate = System.currentTimeMillis()
+            dpd.show()
+        }
+
+        btnSave.setOnClickListener {
+            val merchant = etMerchant.text.toString().trim()
+            val amountStr = etAmount.text.toString().trim()
+            val amount = amountStr.toDoubleOrNull()
+            val selectedCategoryIndex = spinnerCategory.selectedItemPosition
+            val notes = etNotes.text.toString().trim()
+
+            // Validation
+            if (merchant.isEmpty()) {
+                etMerchant.error = "Enter merchant name"
+                return@setOnClickListener
+            }
+            if (amount == null || amount <= 0) {
+                etAmount.error = "Enter valid amount"
+                return@setOnClickListener
+            }
+
+            val category = categories[selectedCategoryIndex]
+
+            val transaction = Transaction(
+                merchantName = merchant,
+                amount = amount,
+                date = selectedDate,
+                category = category.name,
+                confidenceScore = 1.0f, // manual entry = full confidence
+                notes = notes.ifBlank { null }
+            )
+
+            // Insert via coroutine
+            viewLifecycleOwner.lifecycleScope.launch {
+                repository.insertTransaction(transaction)
+                viewModel.loadBudgetData()
+                Toast.makeText(requireContext(), "Bill added successfully", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+        }
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
+
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT
+        )
     }
 
     override fun onResume() {

@@ -28,32 +28,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="100dp"
+        android:paddingBottom="@dimen/bottom_nav_clearance"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="@dimen/spacing_5">
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="@dimen/spacing_4"
                 android:visibility="gone" />
 
             <!-- ── RECEIPT IMAGE ── -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
+                android:layout_height="@dimen/receipt_image_height"
+                android:layout_marginBottom="@dimen/spacing_4"
+                app:cardCornerRadius="@dimen/radius_xl"
+                app:cardElevation="@dimen/elevation_0"
                 app:cardBackgroundColor="@color/bg_elevated"
-                app:strokeWidth="1dp"
+                app:strokeWidth="@dimen/elevation_1"
                 app:strokeColor="@color/border_subtle">
 
                 <FrameLayout
@@ -78,7 +78,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="bottom|end"
-                        android:layout_margin="12dp"
+                        android:layout_margin="@dimen/spacing_3"
                         android:text="99.2% Match"
                         app:chipBackgroundColor="@color/brand_subtle"
                         app:chipStrokeWidth="1dp"
@@ -148,18 +148,18 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
+                android:layout_marginBottom="@dimen/spacing_4"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/elevation_0"
                 app:cardBackgroundColor="@color/bg_elevated"
                 app:strokeColor="@color/border_subtle"
-                app:strokeWidth="1dp">
+                app:strokeWidth="@dimen/elevation_1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_4">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -169,7 +169,7 @@
                         android:textColor="@color/text_tertiary"
                         android:textSize="9sp"
                         android:letterSpacing="0.16"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="@dimen/spacing_3" />
 
                     <!-- Amount field -->
                     <LinearLayout
@@ -177,7 +177,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingVertical="10dp"
+                        android:paddingVertical="@dimen/spacing_2_5"
                         android:background="@drawable/bg_divider_bottom">
 
                         <TextView
@@ -210,7 +210,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingVertical="10dp"
+                        android:paddingVertical="@dimen/spacing_2_5"
                         android:background="@drawable/bg_divider_bottom">
 
                         <TextView
@@ -243,7 +243,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingVertical="10dp"
+                        android:paddingVertical="@dimen/spacing_2_5"
                         android:background="@drawable/bg_divider_bottom">
 
                         <TextView
@@ -276,7 +276,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingVertical="10dp">
+                        android:paddingVertical="@dimen/spacing_2_5">
 
                         <TextView
                             android:layout_width="0dp"
@@ -291,10 +291,10 @@
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                             android:layout_width="160dp"
                             android:layout_height="wrap_content"
-                            app:boxCornerRadiusTopStart="10dp"
-                            app:boxCornerRadiusTopEnd="10dp"
-                            app:boxCornerRadiusBottomStart="10dp"
-                            app:boxCornerRadiusBottomEnd="10dp"
+                            app:boxCornerRadiusTopStart="@dimen/spacing_2_5"
+                            app:boxCornerRadiusTopEnd="@dimen/spacing_2_5"
+                            app:boxCornerRadiusBottomStart="@dimen/spacing_2_5"
+                            app:boxCornerRadiusBottomEnd="@dimen/spacing_2_5"
                             app:boxStrokeColor="@color/border_soft"
                             app:hintTextColor="@color/text_tertiary">
 
@@ -305,7 +305,7 @@
                                 android:inputType="none"
                                 android:textSize="12sp"
                                 android:textColor="@color/text_primary"
-                                android:padding="10dp" />
+                                android:padding="@dimen/spacing_2_5" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -315,19 +315,19 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
+                android:layout_marginBottom="@dimen/spacing_2"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/elevation_0"
                 app:cardBackgroundColor="@color/bg_elevated"
                 app:strokeColor="@color/border_subtle"
-                app:strokeWidth="1dp">
+                app:strokeWidth="@dimen/elevation_1">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_4">
 
                     <TextView
                         android:layout_width="0dp"
@@ -371,19 +371,19 @@
                 android:id="@+id/cardRawOcr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="@dimen/spacing_1"
                 android:visibility="gone"
                 app:cardBackgroundColor="@color/bg_overlay"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="0dp"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/elevation_0"
                 app:strokeColor="@color/border_subtle"
-                app:strokeWidth="1dp">
+                app:strokeWidth="@dimen/elevation_1">
 
                 <TextView
                     android:id="@+id/tvRawOcr"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
+                    android:padding="@dimen/spacing_4"
                     android:textSize="11sp"
                     android:textColor="@color/text_tertiary"
                     android:fontFamily="monospace"
@@ -400,8 +400,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="horizontal"
-        android:padding="16dp"
-        android:paddingBottom="28dp"
+        android:padding="@dimen/spacing_4"
+        android:paddingBottom="@dimen/spacing_7"
         android:background="@drawable/bg_bottom_bar">
 
         <com.google.android.material.button.MaterialButton
@@ -410,11 +410,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="@dimen/spacing_2"
             android:text="@string/retake"
             android:textColor="@color/text_secondary"
             app:strokeColor="@color/border_soft"
-            app:cornerRadius="100dp" />
+            app:cornerRadius="@dimen/radius_full" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
@@ -425,7 +425,7 @@
             android:textColor="@color/on_brand"
             android:textStyle="bold"
             app:backgroundTint="@color/brand"
-            app:cornerRadius="100dp" />
+            app:cornerRadius="@dimen/radius_full" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

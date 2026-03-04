@@ -199,4 +199,10 @@
         <item name="android:color">@color/brand_subtle</item>
     </style>
 
+    <!-- FAB shape -->
+    <style name="ShapeAppearance.SnapBudget.Fab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_lg</item>
+    </style>
+
 </resources>

@@ -32,10 +32,10 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="14dp"
+            android:layout_marginHorizontal="@dimen/spacing_4"
+            android:layout_marginTop="@dimen/spacing_1"
+            android:layout_marginBottom="@dimen/spacing_2"
+            app:cardCornerRadius="@dimen/radius_lg"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@color/bg_elevated"
             app:strokeColor="@color/border_subtle"
@@ -45,7 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:padding="@dimen/spacing_3_5">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -63,12 +63,12 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="@dimen/spacing_2_5"
                     android:hint="@string/category"
-                    app:boxCornerRadiusTopStart="10dp"
-                    app:boxCornerRadiusTopEnd="10dp"
-                    app:boxCornerRadiusBottomStart="10dp"
-                    app:boxCornerRadiusBottomEnd="10dp"
+                    app:boxCornerRadiusTopStart="@dimen/spacing_2_5"
+                    app:boxCornerRadiusTopEnd="@dimen/spacing_2_5"
+                    app:boxCornerRadiusBottomStart="@dimen/spacing_2_5"
+                    app:boxCornerRadiusBottomEnd="@dimen/spacing_2_5"
                     app:boxStrokeColor="@color/border_soft"
                     app:hintTextColor="@color/text_tertiary">
 
@@ -86,7 +86,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="10dp">
+                    android:layout_marginTop="@dimen/spacing_2_5">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnFilterDateFrom"
@@ -94,11 +94,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
+                        android:layout_marginEnd="@dimen/spacing_1_5"
                         android:text="@string/from_date"
                         android:textSize="11sp"
                         android:textColor="@color/text_secondary"
-                        app:cornerRadius="10dp"
+                        app:cornerRadius="@dimen/spacing_2_5"
                         app:strokeColor="@color/border_soft" />
 
                     <com.google.android.material.button.MaterialButton
@@ -107,11 +107,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
+                        android:layout_marginEnd="@dimen/spacing_1_5"
                         android:text="@string/to_date"
                         android:textSize="11sp"
                         android:textColor="@color/text_secondary"
-                        app:cornerRadius="10dp"
+                        app:cornerRadius="@dimen/spacing_2_5"
                         app:strokeColor="@color/border_soft" />
 
                     <com.google.android.material.button.MaterialButton
@@ -132,7 +132,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingVertical="8dp"
+            android:paddingVertical="@dimen/spacing_2"
             android:text="Total: ₹0.00"
             android:fontFamily="monospace"
             android:textSize="16sp"
@@ -145,7 +145,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:padding="48dp"
+            android:padding="@dimen/spacing_12"
             android:text="No transactions found"
             android:textColor="@color/text_tertiary"
             android:textSize="13sp"
@@ -156,7 +156,7 @@
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="16dp"
+            android:padding="@dimen/spacing_4"
             android:clipToPadding="false" />
 
     </LinearLayout>

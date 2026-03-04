@@ -16,15 +16,15 @@
     <!-- Category icon circle -->
     <FrameLayout
         android:id="@+id/categoryIconContainer"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="@dimen/icon_container_size"
+        android:layout_height="@dimen/icon_container_size"
         android:layout_marginEnd="@dimen/spacing_3"
         android:background="@drawable/bg_tx_icon">
 
         <ImageView
             android:id="@+id/ivCategoryIcon"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:layout_width="@dimen/icon_size_sm"
+            android:layout_height="@dimen/icon_size_sm"
             android:layout_gravity="center" />
     </FrameLayout>
 

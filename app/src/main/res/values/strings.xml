@@ -71,4 +71,26 @@
     <string name="monthly_budget">Monthly Budget</string>
     <string name="income">Income</string>
     <string name="balance">Balance</string>
+
+    <!-- Budget Dialog -->
+    <string name="dialog_budget_title">Set Monthly Budget</string>
+    <string name="dialog_budget_subtitle">Define your monthly spending limit to stay on track</string>
+    <string name="dialog_budget_label">BUDGET AMOUNT</string>
+    <string name="dialog_budget_hint">Enter amount</string>
+    <string name="dialog_budget_save">Save Budget</string>
+
+    <!-- Manual Bill Dialog -->
+    <string name="dialog_manual_title">Add Bill</string>
+    <string name="dialog_manual_subtitle">Enter your expense details manually</string>
+    <string name="dialog_manual_merchant_label">MERCHANT / DESCRIPTION</string>
+    <string name="dialog_manual_merchant_hint">e.g. Electricity Bill, Rent</string>
+    <string name="dialog_manual_amount_label">AMOUNT</string>
+    <string name="dialog_manual_amount_hint">0.00</string>
+    <string name="dialog_manual_category_label">CATEGORY</string>
+    <string name="dialog_manual_date_label">DATE</string>
+    <string name="dialog_manual_date_hint">Tap to select date</string>
+    <string name="dialog_manual_notes_label">NOTES (OPTIONAL)</string>
+    <string name="dialog_manual_notes_hint">Add any notes…</string>
+    <string name="dialog_manual_save">Save Bill</string>
+    <string name="fab_add_bill">Add Bill</string>
 </resources>

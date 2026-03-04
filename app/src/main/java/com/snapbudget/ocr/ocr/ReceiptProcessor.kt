@@ -2,10 +2,12 @@ package com.snapbudget.ocr.ocr
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.google.mlkit.vision.text.Text
 import com.snapbudget.ocr.data.model.Transaction
+import com.snapbudget.ocr.data.model.Category
 import com.snapbudget.ocr.data.db.TransactionDao
 import com.snapbudget.ocr.categorization.CategoryClassifier
 import com.snapbudget.ocr.matching.DuplicateDetector
@@ -21,7 +23,7 @@ class ReceiptProcessor(
     private val ocrProcessor = OcrProcessor(context)
     private val receiptParser = ReceiptParser()
     private val receiptValidator = ReceiptValidator()
-    private val aiFallbackService = GenerativeAiFallbackService(context)
+    private val groqAiService = GroqAiService()
     private val tag = "ReceiptProcessor"
 
     data class ProcessingResult(
@@ -46,17 +48,25 @@ class ReceiptProcessor(
 
     suspend fun processReceipt(bitmap: Bitmap): ProcessingResult? {
         return try {
-            Log.d(tag, "Processing receipt from bitmap")
-            
+            val mode = OcrPipelineConfig.getMode(context)
+            Log.d(tag, "Processing receipt from bitmap | mode=$mode")
+
             // Save bitmap to file
             val imagePath = saveBitmapToFile(bitmap)
-            
-            // Perform OCR
+
+            // CLOUD_AI: skip ML Kit entirely, send image to Groq Vision
+            if (mode == OcrPipelineMode.CLOUD_AI) {
+                val cloudResult = processWithCloudAi(bitmap, imagePath)
+                if (cloudResult != null) return cloudResult
+                Log.w(tag, "Cloud AI failed — degrading to OFFLINE")
+            }
+
+            // OFFLINE / HYBRID / Cloud-fallback: use ML Kit
             val ocrResult = ocrProcessor.processImage(bitmap)
-            
+
             when (ocrResult) {
                 is OcrResult.Success -> {
-                    processOcrResult(ocrResult.visionText, ocrResult.text, imagePath)
+                    processOcrResult(ocrResult.visionText, ocrResult.text, imagePath, mode)
                 }
                 is OcrResult.Error -> {
                     Log.e(tag, "OCR Error: ${ocrResult.message}")
@@ -75,14 +85,25 @@ class ReceiptProcessor(
 
     suspend fun processReceipt(uri: Uri): ProcessingResult? {
         return try {
-            Log.d(tag, "Processing receipt from URI")
-            
-            // Perform OCR
+            val mode = OcrPipelineConfig.getMode(context)
+            Log.d(tag, "Processing receipt from URI | mode=$mode")
+
+            // CLOUD_AI: load bitmap and send to Groq Vision
+            if (mode == OcrPipelineMode.CLOUD_AI) {
+                val bitmap = loadBitmapFromUri(uri)
+                if (bitmap != null) {
+                    val cloudResult = processWithCloudAi(bitmap, uri.toString())
+                    if (cloudResult != null) return cloudResult
+                }
+                Log.w(tag, "Cloud AI failed — degrading to OFFLINE")
+            }
+
+            // OFFLINE / HYBRID / Cloud-fallback
             val ocrResult = ocrProcessor.processImage(uri)
-            
+
             when (ocrResult) {
                 is OcrResult.Success -> {
-                    processOcrResult(ocrResult.visionText, ocrResult.text, uri.toString())
+                    processOcrResult(ocrResult.visionText, ocrResult.text, uri.toString(), mode)
                 }
                 is OcrResult.Error -> {
                     Log.e(tag, "OCR Error: ${ocrResult.message}")
@@ -99,8 +120,13 @@ class ReceiptProcessor(
         }
     }
 
-    private suspend fun processOcrResult(visionText: Text, rawText: String, imagePath: String?): ProcessingResult? {
-        Log.d(tag, "processOcrResult | Step 1: Starting OCR result processing")
+    private suspend fun processOcrResult(
+        visionText: Text,
+        rawText: String,
+        imagePath: String?,
+        mode: OcrPipelineMode = OcrPipelineMode.OFFLINE
+    ): ProcessingResult? {
+        Log.d(tag, "processOcrResult | Step 1: Starting OCR result processing (mode=$mode)")
 
         // Parse receipt deterministically first
         val parsedReceipt = receiptParser.parse(visionText, rawText)
@@ -114,38 +140,40 @@ class ReceiptProcessor(
         val validationResult = receiptValidator.validate(parsedReceipt)
         Log.d(tag, "processOcrResult | Step 3: Validation - valid=${validationResult.isValid}, issues=${validationResult.issues}")
 
-        // Fallback to Gemini AI if the deterministic confidence is too low (<60%) or critical fields missing
         var finalMerchantName = parsedReceipt.merchantName
         var finalTotalAmount = parsedReceipt.totalAmount
         var finalDate = parsedReceipt.date
         var finalGstNumber = parsedReceipt.gstNumber
         var finalConfidence = parsedReceipt.overallConfidence
         val finalConfidenceScores = parsedReceipt.confidenceScores.toMutableMap()
-        
-        if (finalConfidence < 0.6f || finalTotalAmount <= 0.0 || finalMerchantName == "Unknown Merchant") {
-            Log.d(tag, "processOcrResult | Step 4: Low confidence (${finalConfidence}). Engaging Gemini AI fallback...")
-            val fallbackResult = aiFallbackService.analyzeReceipt(rawText, finalConfidence)
-            if (fallbackResult != null) {
-                if (fallbackResult.merchantName != null) {
-                    finalMerchantName = fallbackResult.merchantName
+
+        // HYBRID mode: use Groq AI for correction when confidence is low
+        if (mode == OcrPipelineMode.HYBRID &&
+            (finalConfidence < 0.6f || finalTotalAmount <= 0.0 || finalMerchantName == "Unknown Merchant")
+        ) {
+            Log.d(tag, "processOcrResult | Step 4: HYBRID — low confidence ($finalConfidence), calling Groq AI...")
+            val aiResult = groqAiService.correctAndCategorize(rawText)
+            if (aiResult != null) {
+                if (aiResult.merchantName != null) {
+                    finalMerchantName = aiResult.merchantName
                     finalConfidenceScores["merchant"] = 0.9f
                 }
-                if (fallbackResult.totalAmount != null) {
-                    finalTotalAmount = fallbackResult.totalAmount
+                if (aiResult.totalAmount != null) {
+                    finalTotalAmount = aiResult.totalAmount
                     finalConfidenceScores["amount"] = 0.9f
                 }
-                if (fallbackResult.gstNumber != null) {
-                    finalGstNumber = fallbackResult.gstNumber
+                if (aiResult.gstNumber != null) {
+                    finalGstNumber = aiResult.gstNumber
                     finalConfidenceScores["gst"] = 0.9f
                 }
-                finalConfidence = Math.max(finalConfidence.toDouble(), fallbackResult.confidenceScore.toDouble()).toFloat()
-                finalConfidenceScores["ai_fallback_triggered"] = 1.0f
-                Log.d(tag, "processOcrResult | Step 5c: Gemini fallback success. merchant='$finalMerchantName', amount=₹$finalTotalAmount")
+                finalConfidence = maxOf(finalConfidence, aiResult.confidence)
+                finalConfidenceScores["ai_groq_hybrid"] = 1.0f
+                Log.d(tag, "processOcrResult | Step 4: Groq HYBRID success — merchant='$finalMerchantName', amount=₹$finalTotalAmount")
             } else {
-                Log.w(tag, "processOcrResult | Step 4: Fallback failed or skipped.")
+                Log.w(tag, "processOcrResult | Step 4: Groq HYBRID call failed, using offline result")
             }
-        } else {
-            Log.d(tag, "processOcrResult | Step 4: Confidence sufficient ($finalConfidence), skipping Gemini fallback")
+        } else if (mode == OcrPipelineMode.OFFLINE) {
+            Log.d(tag, "processOcrResult | Step 4: OFFLINE mode — no AI fallback")
         }
         
         // Classify category - Use advanced text scanning as primary, but respect user overrides
@@ -242,6 +270,57 @@ class ReceiptProcessor(
             anomalyIssues = parsedReceipt.anomalyIssues,
             needsUserConfirmation = needsConfirmation
         )
+    }
+
+    /**
+     * CLOUD_AI mode: sends bitmap directly to Groq Vision API.
+     * Returns a ProcessingResult built from the AI response, or null on failure.
+     */
+    private suspend fun processWithCloudAi(bitmap: Bitmap, imagePath: String?): ProcessingResult? {
+        Log.d(tag, "processWithCloudAi | Sending image to Groq Vision API")
+        val aiResult = groqAiService.ocrAndParse(bitmap) ?: return null
+
+        val merchantName = aiResult.merchantName ?: "Unknown Merchant"
+        val amount = aiResult.totalAmount ?: 0.0
+        val category = aiResult.category?.let { Category.fromName(it) } ?: Category.Others
+
+        // Respect user category overrides
+        val finalCategory = categoryClassifier.getUserRule(merchantName) ?: category
+
+        val transaction = Transaction(
+            merchantName = merchantName,
+            amount = amount,
+            date = Date(), // TODO: parse aiResult.date if present
+            category = finalCategory.name,
+            gstNumber = aiResult.gstNumber,
+            rawOcrText = "[Cloud AI OCR]",
+            confidenceScore = aiResult.confidence,
+            imagePath = imagePath
+        )
+
+        Log.d(tag, "processWithCloudAi | Success — merchant='$merchantName', amount=₹$amount, category=${finalCategory.name}")
+
+        return ProcessingResult(
+            transaction = transaction,
+            rawOcrText = "[Cloud AI OCR]",
+            confidenceScores = mapOf("ai_groq_cloud" to 1.0f, "confidence" to aiResult.confidence),
+            overallConfidence = aiResult.confidence,
+            validationIssues = emptyList(),
+            imagePath = imagePath,
+            receiptType = aiResult.category ?: "Unknown",
+            needsUserConfirmation = aiResult.confidence < 0.65f
+        )
+    }
+
+    private fun loadBitmapFromUri(uri: Uri): Bitmap? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to load bitmap from URI", e)
+            null
+        }
     }
 
     private fun saveBitmapToFile(bitmap: Bitmap): String {

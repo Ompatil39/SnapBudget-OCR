@@ -5,12 +5,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.snapbudget.ocr.R
 import com.snapbudget.ocr.data.db.AppDatabase
 import com.snapbudget.ocr.data.repository.TransactionRepository
 import com.snapbudget.ocr.databinding.FragmentProfileBinding
+import com.snapbudget.ocr.ocr.OcrPipelineConfig
+import com.snapbudget.ocr.ocr.OcrPipelineMode
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
@@ -28,6 +33,7 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupClickListeners()
+        setupOcrModeSelector()
     }
 
     private fun setupClickListeners() {
@@ -39,6 +45,82 @@ class ProfileFragment : Fragment() {
             showClearDataConfirmation()
         }
     }
+
+    // ─── OCR Mode Selector ───────────────────────────────────────────────
+
+    private fun setupOcrModeSelector() {
+        // Read current mode and reflect in UI
+        val currentMode = OcrPipelineConfig.getMode(requireContext())
+        updateRadioUi(currentMode)
+
+        // Click handlers
+        binding.rowModeOffline.setOnClickListener {
+            selectMode(OcrPipelineMode.OFFLINE)
+        }
+
+        binding.rowModeHybrid.setOnClickListener {
+            selectMode(OcrPipelineMode.HYBRID)
+        }
+
+        binding.rowModeCloudAi.setOnClickListener {
+            selectMode(OcrPipelineMode.CLOUD_AI)
+        }
+    }
+
+    private fun selectMode(mode: OcrPipelineMode) {
+        // Check API key for AI modes
+        if (mode != OcrPipelineMode.OFFLINE && !OcrPipelineConfig.hasApiKey()) {
+            binding.txtApiKeyStatus.visibility = View.VISIBLE
+            binding.txtApiKeyStatus.text = "⚠ Groq API key not configured. Add it to .env and rebuild."
+            binding.txtApiKeyStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.danger))
+            Toast.makeText(requireContext(), "API key required for AI modes", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        OcrPipelineConfig.setMode(requireContext(), mode)
+        updateRadioUi(mode)
+
+        val label = when (mode) {
+            OcrPipelineMode.OFFLINE -> "Offline (Local)"
+            OcrPipelineMode.HYBRID -> "Hybrid (AI Assist)"
+            OcrPipelineMode.CLOUD_AI -> "Cloud AI (Full)"
+        }
+        Toast.makeText(requireContext(), "OCR mode: $label", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun updateRadioUi(selected: OcrPipelineMode) {
+        val ctx = requireContext()
+        val brandColor = ContextCompat.getColor(ctx, R.color.brand)
+        val dimColor = ContextCompat.getColor(ctx, R.color.text_tertiary)
+
+        // Helper to set checked/unchecked state
+        fun setRadio(imageView: ImageView, isChecked: Boolean) {
+            if (isChecked) {
+                imageView.setImageResource(R.drawable.ic_radio_checked)
+                imageView.setColorFilter(brandColor)
+                imageView.contentDescription = "Selected"
+            } else {
+                imageView.setImageResource(R.drawable.ic_radio_unchecked)
+                imageView.setColorFilter(dimColor)
+                imageView.contentDescription = "Not selected"
+            }
+        }
+
+        setRadio(binding.radioOffline, selected == OcrPipelineMode.OFFLINE)
+        setRadio(binding.radioHybrid, selected == OcrPipelineMode.HYBRID)
+        setRadio(binding.radioCloudAi, selected == OcrPipelineMode.CLOUD_AI)
+
+        // Show API key status for AI modes
+        if (selected != OcrPipelineMode.OFFLINE && OcrPipelineConfig.hasApiKey()) {
+            binding.txtApiKeyStatus.visibility = View.VISIBLE
+            binding.txtApiKeyStatus.text = "✓ Groq API key configured"
+            binding.txtApiKeyStatus.setTextColor(ContextCompat.getColor(ctx, R.color.brand))
+        } else {
+            binding.txtApiKeyStatus.visibility = View.GONE
+        }
+    }
+
+    // ─── Data Management ─────────────────────────────────────────────────
 
     private fun showClearDataConfirmation() {
         androidx.appcompat.app.AlertDialog.Builder(requireContext())

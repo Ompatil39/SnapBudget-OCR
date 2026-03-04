@@ -16,6 +16,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Read Groq API key from .env file
+        val envFile = rootProject.file(".env")
+        val groqKey = if (envFile.exists()) {
+            envFile.readLines()
+                .firstOrNull { it.startsWith("GROQ_API_KEY=") }
+                ?.substringAfter("=")?.trim() ?: ""
+        } else ""
+        buildConfigField("String", "GROQ_API_KEY", "\"$groqKey\"")
     }
 
     buildTypes {
@@ -39,6 +48,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.snapbudget.ocr.R
+import android.content.res.ColorStateList
 import com.snapbudget.ocr.data.db.AppDatabase
 import com.snapbudget.ocr.data.model.Category
 import com.snapbudget.ocr.data.model.Transaction
@@ -185,27 +186,56 @@ class ReceiptPreviewActivity : AppCompatActivity() {
                         showDuplicateWarning(result)
                     }
 
-                    // Show user confirmation prompt if low confidence (§12)
-                    if (result.needsUserConfirmation && !result.isDuplicate) {
-                        Log.d("STEP_BY_STEP", "9c. Low confidence — prompting user confirmation")
-                        showConfirmationPrompt(result)
+                    // Show inline OCR warning for low confidence (replaces dialog)
+                    if (result.overallConfidence < 0.70f) {
+                        Log.d("STEP_BY_STEP", "9c. Low confidence (${(result.overallConfidence * 100).toInt()}%) — showing inline warning")
+                        showOcrWarningBanner(
+                            isComplete = false,
+                            confidence = result.overallConfidence,
+                            confidenceScores = result.confidenceScores
+                        )
                     }
 
                     // Show raw OCR comparison + receipt type
                     binding.tvRawOcr.text = "Raw OCR:\n${result.rawOcrText}"
                     binding.chipConfidence.text = "${(result.overallConfidence * 100).toInt()}% • ${result.receiptType}"
+                    
+                    // Style confidence chip based on confidence level
+                    val chipColor = when {
+                        result.overallConfidence >= 0.70f -> R.color.brand
+                        result.overallConfidence >= 0.40f -> R.color.warning
+                        else -> R.color.danger
+                    }
+                    val chipBgColor = when {
+                        result.overallConfidence >= 0.70f -> R.color.brand_subtle
+                        result.overallConfidence >= 0.40f -> R.color.warning_bg
+                        else -> R.color.danger_bg
+                    }
+                    binding.chipConfidence.setTextColor(getColor(chipColor))
+                    binding.chipConfidence.chipStrokeColor = ColorStateList.valueOf(getColor(chipColor))
+                    binding.chipConfidence.chipBackgroundColor = ColorStateList.valueOf(getColor(chipBgColor))
+                    
                     Log.d("STEP_BY_STEP", "9d. Receipt type: ${result.receiptType}, anomalies: ${result.anomalyIssues.size}")
                 } else {
                     Log.e("STEP_BY_STEP", "9. ERROR: ReceiptProcessor returned null result")
-                    Toast.makeText(this@ReceiptPreviewActivity, 
-                        "Could not extract receipt data. Please enter manually.", 
-                        Toast.LENGTH_LONG).show()
+                    // Show inline warning card instead of Toast
+                    showOcrWarningBanner(
+                        isComplete = true,
+                        confidence = 0f,
+                        confidenceScores = emptyMap()
+                    )
+                    // Pre-fill defaults for manual entry
+                    prefillManualEntryDefaults()
                 }
             } catch (e: Exception) {
                 Log.e("STEP_BY_STEP", "9. ERROR during loadAndProcessImage", e)
-                Toast.makeText(this@ReceiptPreviewActivity, 
-                    "Error processing receipt: ${e.message}", 
-                    Toast.LENGTH_SHORT).show()
+                // Show inline warning card for errors too
+                showOcrWarningBanner(
+                    isComplete = true,
+                    confidence = 0f,
+                    confidenceScores = emptyMap()
+                )
+                prefillManualEntryDefaults()
             } finally {
                 showLoading(false)
             }
@@ -431,6 +461,102 @@ class ReceiptPreviewActivity : AppCompatActivity() {
     private fun showLoading(show: Boolean) {
         binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
         binding.btnSave.isEnabled = !show
+    }
+
+    /**
+     * Shows the inline OCR warning banner card with appropriate messaging.
+     *
+     * @param isComplete true if OCR completely failed (null result), false if partial/low confidence
+     * @param confidence overall confidence score (0.0 - 1.0)
+     * @param confidenceScores per-field confidence map
+     */
+    private fun showOcrWarningBanner(
+        isComplete: Boolean,
+        confidence: Float,
+        confidenceScores: Map<String, Float>
+    ) {
+        binding.cardOcrWarning.visibility = View.VISIBLE
+
+        if (isComplete) {
+            // OCR completely failed
+            binding.tvOcrWarningTitle.text = getString(R.string.ocr_failed_title)
+            binding.tvOcrWarningMessage.text = getString(R.string.ocr_failed_message)
+            binding.tvOcrWarningTitle.setTextColor(getColor(R.color.danger))
+            binding.cardOcrWarning.strokeColor = getColor(R.color.danger)
+            binding.cardOcrWarning.setCardBackgroundColor(getColor(R.color.danger_bg))
+            binding.ivWarningIcon.imageTintList = ColorStateList.valueOf(getColor(R.color.danger))
+
+            // Update confidence chip to show failure
+            binding.chipConfidence.text = "? Low Match"
+            binding.chipConfidence.setTextColor(getColor(R.color.danger))
+            binding.chipConfidence.chipStrokeColor = ColorStateList.valueOf(getColor(R.color.danger))
+            binding.chipConfidence.chipBackgroundColor = ColorStateList.valueOf(getColor(R.color.danger_bg))
+
+            // Make Retake button equal prominence to Save
+            equalizeActionButtons()
+        } else {
+            // Low confidence — show field-level details
+            binding.tvOcrWarningTitle.text = getString(R.string.ocr_low_confidence_title)
+            
+            // Build per-field confidence breakdown
+            val weakFields = confidenceScores
+                .filter { (key, _) -> key in listOf("amount", "merchant", "date", "category", "gst") }
+                .filter { (_, score) -> score < 0.50f }
+            
+            val message = if (weakFields.isNotEmpty()) {
+                val fieldList = weakFields.entries.joinToString("\n") { (field, score) ->
+                    val label = field.replaceFirstChar { it.uppercase() }
+                    "  • $label: ${(score * 100).toInt()}%"
+                }
+                "${getString(R.string.ocr_low_confidence_message)}\n\n$fieldList"
+            } else {
+                getString(R.string.ocr_low_confidence_message)
+            }
+            binding.tvOcrWarningMessage.text = message
+
+            // If really low confidence (<30%), promote Retake button
+            if (confidence < 0.30f) {
+                equalizeActionButtons()
+            }
+        }
+    }
+
+    /**
+     * Pre-fills form defaults for manual entry when OCR fails.
+     * Date → today, Category → Others.
+     */
+    private fun prefillManualEntryDefaults() {
+        // Pre-fill date with today
+        binding.edtDate.setText(dateFormat.format(Date()))
+        
+        // Default category to "Others"
+        val othersIndex = Category.getAllCategories()
+            .indexOfFirst { it.name == "Others" }
+        if (othersIndex >= 0) {
+            selectedCategoryIndex = othersIndex
+            binding.spinnerCategory.setText(
+                Category.getAllCategories()[othersIndex].displayName, false
+            )
+        }
+        
+        // Set focus to Amount field for immediate input
+        binding.edtAmount.requestFocus()
+        Log.d("STEP_BY_STEP", "9e. Manual entry defaults: date=today, category=Others")
+    }
+
+    /**
+     * Makes Retake and Save buttons equal weight so the user
+     * can easily choose to retake a bad scan.
+     */
+    private fun equalizeActionButtons() {
+        val retakeParams = binding.btnRetake.layoutParams as? android.widget.LinearLayout.LayoutParams
+        val saveParams = binding.btnSave.layoutParams as? android.widget.LinearLayout.LayoutParams
+        if (retakeParams != null && saveParams != null) {
+            retakeParams.weight = 1f
+            saveParams.weight = 1f
+            binding.btnRetake.layoutParams = retakeParams
+            binding.btnSave.layoutParams = saveParams
+        }
     }
 
     private fun parseDate(dateStr: String): Date? {

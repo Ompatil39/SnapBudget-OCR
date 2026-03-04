@@ -53,7 +53,7 @@
                         android:layout_gravity="center"
                         android:src="@drawable/ic_nav_profile"
                         app:tint="@color/brand"
-                        android:importantForAccessibility="no" />
+                        android:contentDescription="Profile avatar" />
                 </FrameLayout>
 
                 <LinearLayout

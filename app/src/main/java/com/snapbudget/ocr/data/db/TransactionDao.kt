@@ -49,8 +49,28 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun getTransactionCount(): Int
 
+    @Query("SELECT date as day, SUM(amount) as total FROM transactions WHERE date BETWEEN :startDate AND :endDate GROUP BY date ORDER BY date ASC")
+    suspend fun getDailySpending(startDate: Date, endDate: Date): List<DailySpending>
+
+    @Query("SELECT merchantName, COUNT(*) as txnCount, SUM(amount) as totalSpent FROM transactions WHERE date BETWEEN :startDate AND :endDate GROUP BY merchantName ORDER BY totalSpent DESC LIMIT :limit")
+    suspend fun getTopMerchants(startDate: Date, endDate: Date, limit: Int = 5): List<MerchantSpending>
+
+    @Query("DELETE FROM transactions")
+    suspend fun deleteAllTransactions()
+
     data class CategoryExpense(
         val category: String,
         val total: Double
+    )
+
+    data class DailySpending(
+        val day: Date,
+        val total: Double
+    )
+
+    data class MerchantSpending(
+        val merchantName: String,
+        val txnCount: Int,
+        val totalSpent: Double
     )
 }

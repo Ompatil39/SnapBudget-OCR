@@ -79,6 +79,20 @@ class TransactionAdapter(
                 }
             }
 
+            // Accessibility: composed content description for screen readers (WCAG 4.1.2)
+            itemView.contentDescription = buildString {
+                append(transaction.merchantName)
+                append(", ")
+                append(category.displayName)
+                append(" category, ")
+                append(if (amount >= 0) "minus " else "plus ")
+                append(CurrencyFormatter.format(kotlin.math.abs(amount)))
+                append(", ")
+                append(DateFormatter.format(transaction.date))
+            }
+            // Set category icon content description instead of hiding from accessibility
+            ivCategoryIcon.contentDescription = category.displayName
+
             root.setOnClickListener { onItemClick(transaction) }
             root.setOnLongClickListener {
                 onDeleteClick(transaction)

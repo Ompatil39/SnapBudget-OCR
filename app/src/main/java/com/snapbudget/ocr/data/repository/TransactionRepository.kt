@@ -71,4 +71,34 @@ class TransactionRepository(private val transactionDao: TransactionDao) {
     fun searchTransactions(query: String): LiveData<List<Transaction>> {
         return transactionDao.searchTransactions(query)
     }
+
+    suspend fun getDailySpending(year: Int, month: Int): List<TransactionDao.DailySpending> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, 1, 0, 0, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startDate = calendar.time
+
+        calendar.add(Calendar.MONTH, 1)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val endDate = calendar.time
+
+        return@withContext transactionDao.getDailySpending(startDate, endDate)
+    }
+
+    suspend fun getTopMerchants(year: Int, month: Int, limit: Int = 5): List<TransactionDao.MerchantSpending> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, 1, 0, 0, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startDate = calendar.time
+
+        calendar.add(Calendar.MONTH, 1)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val endDate = calendar.time
+
+        return@withContext transactionDao.getTopMerchants(startDate, endDate, limit)
+    }
+
+    suspend fun deleteAllTransactions() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        transactionDao.deleteAllTransactions()
+    }
 }

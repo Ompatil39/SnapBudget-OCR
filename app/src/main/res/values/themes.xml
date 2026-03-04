@@ -189,6 +189,11 @@
         <item name="android:fontFamily">monospace</item>
     </style>
 
+    <!-- Nav label -->
+    <style name="TextAppearance.SnapBudget.NavLabel" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">10sp</item>
+    </style>
+
     <!-- Nav active indicator -->
     <style name="Widget.SnapBudget.NavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/brand_subtle</item>

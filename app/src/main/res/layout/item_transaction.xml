@@ -25,8 +25,7 @@
             android:id="@+id/ivCategoryIcon"
             android:layout_width="18dp"
             android:layout_height="18dp"
-            android:layout_gravity="center"
-            android:importantForAccessibility="no" />
+            android:layout_gravity="center" />
     </FrameLayout>
 
     <!-- Name + category label -->

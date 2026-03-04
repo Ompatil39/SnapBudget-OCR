@@ -33,4 +33,42 @@
     <string name="flash">Flash</string>
     <string name="close">Close</string>
     <string name="total_amount">Total: ₹%1$.2f</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_analytics">Analytics</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_wallet">Wallet</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Content Descriptions -->
+    <string name="nav_home_desc">Home dashboard</string>
+    <string name="nav_analytics_desc">Spending analytics and charts</string>
+    <string name="nav_scan_desc">Scan a receipt</string>
+    <string name="nav_wallet_desc">Manage monthly budgets</string>
+    <string name="nav_profile_desc">Settings and profile</string>
+    <string name="notifications">Notifications</string>
+
+    <!-- Empty States -->
+    <string name="empty_transactions">No transactions yet</string>
+    <string name="empty_transactions_hint">Tap the camera button below to scan your first receipt</string>
+    <string name="empty_analytics">No spending data yet</string>
+    <string name="empty_analytics_hint">Start scanning receipts to see your spending analytics here</string>
+    <string name="empty_wallet">No budget set yet</string>
+    <string name="empty_wallet_hint">Set a monthly budget to track your spending against limits</string>
+    <string name="empty_wallet_btn">Set Monthly Budget</string>
+
+    <!-- OCR Error States -->
+    <string name="ocr_failed_title">Manual Entry Required</string>
+    <string name="ocr_failed_message">We couldn\'t read this receipt clearly. Please enter the details manually.</string>
+    <string name="ocr_low_confidence_title">Low Confidence Extraction</string>
+    <string name="ocr_low_confidence_message">Some fields may be incorrect. Please verify before saving.</string>
+
+    <!-- Wallet -->
+    <string name="wallet_spent">spent</string>
+    <string name="wallet_remaining">remaining</string>
+    <string name="wallet_over_budget">OVER BUDGET</string>
+    <string name="monthly_budget">Monthly Budget</string>
+    <string name="income">Income</string>
+    <string name="balance">Balance</string>
 </resources>

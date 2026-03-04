@@ -166,4 +166,32 @@
         <item name="android:textColor">@color/brand</item>
     </style>
 
+    <!-- Section Header — for "RECENT TRANSACTIONS", "CATEGORIES" -->
+    <style name="TextAppearance.SnapBudget.SectionHeader" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
+    <!-- Budget Amount -->
+    <style name="TextAppearance.SnapBudget.BudgetAmount" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
+
+    <!-- Chip label for income/expense -->
+    <style name="TextAppearance.SnapBudget.ChipLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
+
+    <!-- Nav active indicator -->
+    <style name="Widget.SnapBudget.NavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/brand_subtle</item>
+    </style>
+
 </resources>

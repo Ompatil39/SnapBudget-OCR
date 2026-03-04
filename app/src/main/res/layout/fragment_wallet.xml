@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_base">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/spacing_5"
+        android:paddingTop="@dimen/spacing_5"
+        android:paddingBottom="@dimen/spacing_4">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_wallet"
+            android:textAppearance="@style/TextAppearance.SnapBudget.Headline2"
+            android:layout_marginBottom="@dimen/spacing_5"
+            android:accessibilityHeading="true" />
+
+        <!-- Empty State — shown when no budget set -->
+        <LinearLayout
+            android:id="@+id/layoutWalletEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="@dimen/spacing_12">
+
+            <ImageView
+                android:layout_width="@dimen/touch_target_min"
+                android:layout_height="@dimen/touch_target_min"
+                android:src="@drawable/ic_nav_wallet"
+                app:tint="@color/text_tertiary"
+                android:layout_marginBottom="@dimen/spacing_4"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/empty_wallet"
+                android:textAppearance="@style/TextAppearance.SnapBudget.BodyMedium"
+                android:textColor="@color/text_secondary"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/empty_wallet_hint"
+                android:textAppearance="@style/TextAppearance.SnapBudget.BodySmall"
+                android:textColor="@color/text_tertiary"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/spacing_1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSetBudget"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_5"
+                android:text="@string/empty_wallet_btn"
+                android:textColor="@color/on_brand"
+                android:textStyle="bold"
+                app:backgroundTint="@color/brand"
+                app:cornerRadius="@dimen/radius_full" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -30,4 +30,28 @@
     <dimen name="button_height">48dp</dimen>
     <dimen name="chart_height">250dp</dimen>
     <dimen name="receipt_image_height">200dp</dimen>
+
+    <!-- Bottom Navigation -->
+    <dimen name="bottom_nav_height">64dp</dimen>
+    <dimen name="bottom_nav_clearance">80dp</dimen>
+
+    <!-- Touch targets (WCAG 2.5.5) -->
+    <dimen name="touch_target_min">48dp</dimen>
+
+    <!-- List & Grid -->
+    <dimen name="list_item_min_height">56dp</dimen>
+    <dimen name="grid_gap">12dp</dimen>
+
+    <!-- Elevation -->
+    <dimen name="elevation_0">0dp</dimen>
+    <dimen name="elevation_1">1dp</dimen>
+    <dimen name="elevation_2">3dp</dimen>
+    <dimen name="elevation_3">6dp</dimen>
+
+    <!-- Charts -->
+    <dimen name="line_chart_height">200dp</dimen>
+    <dimen name="donut_chart_height">240dp</dimen>
+
+    <!-- Center nav icon -->
+    <dimen name="center_nav_icon">32dp</dimen>
 </resources>

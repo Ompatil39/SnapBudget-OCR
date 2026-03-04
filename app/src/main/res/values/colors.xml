@@ -20,7 +20,7 @@
     <!-- Text -->
     <color name="text_primary">#EEF0F4</color>
     <color name="text_secondary">#8E97AA</color>
-    <color name="text_tertiary">#525E72</color>
+    <color name="text_tertiary">#8899AA</color>
 
     <!-- ── BRAND — Electric Teal-Green ── -->
     <color name="brand">#00D68F</color>

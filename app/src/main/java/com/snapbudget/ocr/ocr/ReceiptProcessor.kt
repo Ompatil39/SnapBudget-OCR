@@ -166,6 +166,13 @@ class ReceiptProcessor(
                     finalGstNumber = aiResult.gstNumber
                     finalConfidenceScores["gst"] = 0.9f
                 }
+                if (aiResult.date != null) {
+                    val aiDate = receiptParser.parseDateString(aiResult.date)
+                    if (aiDate != null) {
+                        finalDate = aiDate
+                        finalConfidenceScores["date"] = 0.9f
+                    }
+                }
                 finalConfidence = maxOf(finalConfidence, aiResult.confidence)
                 finalConfidenceScores["ai_groq_hybrid"] = 1.0f
                 Log.d(tag, "processOcrResult | Step 4: Groq HYBRID success — merchant='$finalMerchantName', amount=₹$finalTotalAmount")
@@ -290,7 +297,7 @@ class ReceiptProcessor(
         val transaction = Transaction(
             merchantName = merchantName,
             amount = amount,
-            date = Date(), // TODO: parse aiResult.date if present
+            date = receiptParser.parseDateString(aiResult.date) ?: Date(),
             category = finalCategory.name,
             gstNumber = aiResult.gstNumber,
             rawOcrText = "[Cloud AI OCR]",

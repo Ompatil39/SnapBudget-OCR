@@ -707,7 +707,7 @@ class ReceiptParser {
         }
     }
 
-    private fun parseDateString(dateStr: String?): Date? {
+    fun parseDateString(dateStr: String?): Date? {
         if (dateStr == null) return null
 
         val cleaned = dateStr.replace(ReceiptPatterns.datePrefixRegex, "").trim()

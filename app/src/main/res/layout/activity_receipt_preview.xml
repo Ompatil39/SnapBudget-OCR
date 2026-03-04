@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_base">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="Review Transaction"
+            app:titleTextColor="@color/text_primary"
+            app:navigationIcon="?attr/homeAsUpIndicator"
+            app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="100dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone" />
+
+            <!-- ── RECEIPT IMAGE ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/bg_elevated"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/border_subtle">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/imgReceipt"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        tools:src="@tools:sample/backgrounds/scenic" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_image_overlay" />
+
+                    <!-- OCR Confidence Chip -->
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipConfidence"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="12dp"
+                        android:text="99.2% Match"
+                        app:chipBackgroundColor="@color/brand_subtle"
+                        app:chipStrokeWidth="1dp"
+                        app:chipStrokeColor="@color/brand"
+                        android:textColor="@color/brand"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── OCR RESULT CARD (like scan mockup) ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/bg_elevated"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="EXTRACTED DATA"
+                        android:fontFamily="monospace"
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="9sp"
+                        android:letterSpacing="0.16"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Amount field -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="10dp"
+                        android:background="@drawable/bg_divider_bottom">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Amount"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtAmount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@null"
+                            android:inputType="numberDecimal"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/brand"
+                            android:fontFamily="monospace"
+                            android:gravity="end"
+                            android:hint="₹ 0.00"
+                            android:textColorHint="@color/text_tertiary" />
+                    </LinearLayout>
+
+                    <!-- Merchant field -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="10dp"
+                        android:background="@drawable/bg_divider_bottom">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Merchant"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtMerchant"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:inputType="textCapWords"
+                            android:textSize="13sp"
+                            android:textColor="@color/text_primary"
+                            android:gravity="end"
+                            android:hint="Store name"
+                            android:textColorHint="@color/text_tertiary" />
+                    </LinearLayout>
+
+                    <!-- Date field -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="10dp"
+                        android:background="@drawable/bg_divider_bottom">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Date"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@null"
+                            android:focusable="false"
+                            android:inputType="none"
+                            android:textSize="13sp"
+                            android:textColor="@color/text_primary"
+                            android:fontFamily="monospace"
+                            android:hint="DD/MM/YYYY"
+                            android:textColorHint="@color/text_tertiary" />
+                    </LinearLayout>
+
+                    <!-- Category row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="10dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Category"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilCategory"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            app:boxCornerRadiusTopStart="10dp"
+                            app:boxCornerRadiusTopEnd="10dp"
+                            app:boxCornerRadiusBottomStart="10dp"
+                            app:boxCornerRadiusBottomEnd="10dp"
+                            app:boxStrokeColor="@color/border_soft"
+                            app:hintTextColor="@color/text_tertiary">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/spinnerCategory"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_primary"
+                                android:padding="10dp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── GST / NOTES FIELD ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/bg_elevated"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="GST Number"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtGst"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:inputType="textCapCharacters"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_primary"
+                        android:fontFamily="monospace"
+                        android:gravity="end"
+                        android:hint="Optional"
+                        android:textColorHint="@color/text_tertiary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── RAW OCR TEXT (collapsible) ── -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShowRawOcr"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="VIEW EXTRACTED TEXT"
+                android:textColor="@color/text_tertiary"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.1"
+                android:textSize="10sp"
+                app:icon="@android:drawable/ic_menu_info_details"
+                app:iconTint="@color/text_tertiary" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardRawOcr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/bg_overlay"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/tvRawOcr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_tertiary"
+                    android:fontFamily="monospace"
+                    android:lineSpacingMultiplier="1.4"
+                    tools:text="Extracted text will appear here..." />
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- ── BOTTOM ACTION BAR ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:paddingBottom="28dp"
+        android:background="@drawable/bg_bottom_bar">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetake"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="@string/retake"
+            android:textColor="@color/text_secondary"
+            app:strokeColor="@color/border_soft"
+            app:cornerRadius="100dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:text="Confirm &amp; Save"
+            android:textColor="@color/on_brand"
+            android:textStyle="bold"
+            app:backgroundTint="@color/brand"
+            app:cornerRadius="100dp" />
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

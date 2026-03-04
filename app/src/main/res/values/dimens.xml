@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing Tokens -->
+    <dimen name="spacing_0_5">2dp</dimen>
+    <dimen name="spacing_1">4dp</dimen>
+    <dimen name="spacing_1_5">6dp</dimen>
+    <dimen name="spacing_2">8dp</dimen>
+    <dimen name="spacing_2_5">10dp</dimen>
+    <dimen name="spacing_3">12dp</dimen>
+    <dimen name="spacing_3_5">14dp</dimen>
+    <dimen name="spacing_4">16dp</dimen>
+    <dimen name="spacing_5">20dp</dimen>
+    <dimen name="spacing_6">24dp</dimen>
+    <dimen name="spacing_7">28dp</dimen>
+    <dimen name="spacing_8">32dp</dimen>
+    <dimen name="spacing_10">40dp</dimen>
+    <dimen name="spacing_12">48dp</dimen>
+    <dimen name="spacing_13">52dp</dimen>
+
+    <!-- Radius Tokens -->
+    <dimen name="radius_sm">4dp</dimen>
+    <dimen name="radius_md">12dp</dimen>
+    <dimen name="radius_lg">14dp</dimen>
+    <dimen name="radius_xl">20dp</dimen>
+    <dimen name="radius_full">100dp</dimen>
+
+    <!-- Core component sizes -->
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="icon_size">24dp</dimen>
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="chart_height">250dp</dimen>
+    <dimen name="receipt_image_height">200dp</dimen>
+</resources>

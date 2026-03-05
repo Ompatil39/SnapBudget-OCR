@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.FirebaseAuth
 import com.snapbudget.ocr.R
 import com.snapbudget.ocr.data.db.AppDatabase
 import com.snapbudget.ocr.data.repository.TransactionRepository
@@ -43,6 +44,10 @@ class ProfileFragment : Fragment() {
 
         binding.rowClearData.setOnClickListener {
             showClearDataConfirmation()
+        }
+
+        binding.rowSignOut.setOnClickListener {
+            showSignOutConfirmation()
         }
     }
 
@@ -141,6 +146,23 @@ class ProfileFragment : Fragment() {
 
                     Toast.makeText(requireContext(), "All data cleared", Toast.LENGTH_SHORT).show()
                 }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showSignOutConfirmation() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Sign Out")
+            .setMessage("Are you sure you want to sign out?")
+            .setPositiveButton("Sign Out") { _, _ ->
+                // Sign out from Firebase
+                FirebaseAuth.getInstance().signOut()
+
+                // Navigate back to LoginActivity
+                val intent = android.content.Intent(requireContext(), com.snapbudget.ocr.LoginActivity::class.java)
+                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
             }
             .setNegativeButton("Cancel", null)
             .show()

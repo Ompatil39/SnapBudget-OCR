@@ -402,6 +402,51 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ACCOUNT Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACCOUNT"
+            android:textAppearance="@style/TextAppearance.SnapBudget.SectionHeader"
+            android:layout_marginBottom="@dimen/spacing_3"
+            android:accessibilityHeading="true" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_6"
+            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardElevation="@dimen/elevation_0"
+            app:cardBackgroundColor="@color/bg_surface"
+            app:strokeColor="@color/border_subtle"
+            app:strokeWidth="@dimen/elevation_1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/rowSignOut"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/list_item_min_height"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="@dimen/spacing_4"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sign Out"
+                        android:textAppearance="@style/TextAppearance.SnapBudget.BodyMedium"
+                        android:textColor="@color/danger" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- ABOUT Section -->
         <TextView
             android:layout_width="wrap_content"

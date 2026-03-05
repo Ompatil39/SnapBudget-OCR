@@ -93,4 +93,13 @@
     <string name="dialog_manual_notes_hint">Add any notes…</string>
     <string name="dialog_manual_save">Save Bill</string>
     <string name="fab_add_bill">Add Bill</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Securely access your budget and transactions</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="create_account">Create Account</string>
+    <string name="forgot_password">Forgot Password?</string>
 </resources>

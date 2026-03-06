@@ -1,5 +1,6 @@
 package com.snapbudget.ocr.ui.home
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -30,7 +31,8 @@ class HomeFragment : Fragment() {
     private val viewModel: DashboardViewModel by activityViewModels {
         val database = AppDatabase.getDatabase(requireContext())
         val repository = TransactionRepository(database.transactionDao())
-        DashboardViewModel.Factory(repository)
+        val prefs = requireContext().getSharedPreferences("snapbudget_prefs", Context.MODE_PRIVATE)
+        DashboardViewModel.Factory(repository, prefs)
     }
 
     private lateinit var adapter: TransactionAdapter
@@ -56,11 +58,17 @@ class HomeFragment : Fragment() {
 
     private fun setupGreeting() {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        binding.tvGreeting.text = when {
-            hour < 12 -> "Good morning,"
-            hour < 17 -> "Good afternoon,"
-            else -> "Good evening,"
+        val greeting = when {
+            hour < 12 -> "Good morning"
+            hour < 17 -> "Good afternoon"
+            else -> "Good evening"
         }
+        
+        val prefs = requireContext().getSharedPreferences("snapbudget_prefs", Context.MODE_PRIVATE)
+        val defaultName = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.displayName ?: "User"
+        val userName = prefs.getString("user_name", defaultName) ?: "User"
+        
+        binding.tvGreeting.text = "$greeting, $userName"
     }
 
     private fun setMonthLabel() {
@@ -83,15 +91,18 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        viewModel.monthlyBudget.observe(viewLifecycleOwner) { budget ->
+            val spent = viewModel.monthlyTotal.value ?: 0.0
+            updateIncomeAndBalance(budget, spent)
+            updateBudgetProgress(budget, spent)
+        }
+
         viewModel.monthlyTotal.observe(viewLifecycleOwner) { total ->
             val spent = total ?: 0.0
+            val budget = viewModel.monthlyBudget.value ?: 0.0
             binding.tvMonthlyTotal.text = "-${CurrencyFormatter.format(spent)}"
-
-            // Update balance (simple: balance = 0 - spent for now, until income tracking is added)
-            binding.tvBalance.text = CurrencyFormatter.format(spent)
-
-            // Update budget progress (percentage of a default budget, or just show spending)
-            updateBudgetProgress(spent)
+            updateIncomeAndBalance(budget, spent)
+            updateBudgetProgress(budget, spent)
         }
 
         viewModel.recentTransactions.observe(viewLifecycleOwner) { transactions ->
@@ -115,9 +126,12 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun updateBudgetProgress(spent: Double) {
-        // Default budget placeholder — will be connected to WalletFragment's budget later
-        val budget = 20000.0
+    private fun updateIncomeAndBalance(budget: Double, spent: Double) {
+        binding.tvIncome.text = "+${CurrencyFormatter.format(budget)}"
+        binding.tvBalance.text = CurrencyFormatter.format(budget - spent)
+    }
+
+    private fun updateBudgetProgress(budget: Double, spent: Double) {
         val percent = if (budget > 0) ((spent / budget) * 100).coerceAtMost(100.0) else 0.0
         val percentInt = percent.toInt()
 
@@ -179,6 +193,7 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        setupGreeting()
         viewModel.loadDashboardData()
     }
 

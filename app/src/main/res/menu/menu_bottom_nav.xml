@@ -12,9 +12,8 @@
         android:contentDescription="@string/nav_analytics_desc" />
     <item
         android:id="@+id/nav_camera"
-        android:icon="@drawable/ic_nav_camera"
-        android:title="@string/nav_scan"
-        android:contentDescription="@string/nav_scan_desc" />
+        android:title=""
+        android:enabled="false" />
     <item
         android:id="@+id/nav_wallet"
         android:icon="@drawable/ic_nav_wallet"

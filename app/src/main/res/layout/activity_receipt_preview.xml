@@ -311,6 +311,100 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ── LINE ITEMS SECTION (hidden when no items) ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardLineItems"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_4"
+                android:visibility="gone"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="@dimen/elevation_0"
+                app:cardBackgroundColor="@color/bg_elevated"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="@dimen/elevation_1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_4">
+
+                    <!-- Header row: ITEMS label + count badge -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="@dimen/spacing_3">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ITEMS"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.16" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipItemCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="24dp"
+                            android:layout_marginStart="@dimen/spacing_2"
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="@color/brand"
+                            app:chipBackgroundColor="@color/brand_subtle"
+                            app:chipStrokeWidth="0dp"
+                            app:chipMinHeight="24dp"
+                            app:chipMinTouchTargetSize="24dp" />
+                    </LinearLayout>
+
+                    <!-- RecyclerView for line items -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvLineItems"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never" />
+
+                    <!-- Subtotal footer -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="@dimen/spacing_2"
+                        android:background="@color/border_subtle" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutItemsSubtotal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingTop="@dimen/spacing_2">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Items Subtotal"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvItemsSubtotal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- ── GST / NOTES FIELD ── -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

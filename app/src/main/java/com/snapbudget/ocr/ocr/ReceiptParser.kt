@@ -1,4 +1,4 @@
-package com.snapbudget.ocr.ocr
+ package com.snapbudget.ocr.ocr
 
 import android.graphics.Rect
 import android.util.Log
@@ -20,10 +20,10 @@ data class CategoryAnalysis(
 
 object ReceiptPatterns {
     val datePatterns = listOf(
+        Pattern.compile("(?:Date|Dt|Dated|Invoice Date|Bill Date|Txn Date)[:\\s]+(\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{2,4})", Pattern.CASE_INSENSITIVE),
         Pattern.compile("(\\d{1,2})[/-](\\d{1,2})[/-](\\d{2,4})"),
         Pattern.compile("(\\d{4})[/-](\\d{1,2})[/-](\\d{1,2})"),
         Pattern.compile("(\\d{1,2})\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+(\\d{2,4})", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("(?:Date|Dt|Dated)[:\\s]+(\\d{1,2}[/\\-.](\\d{1,2})[/\\-.](\\d{2,4}))", Pattern.CASE_INSENSITIVE),
         Pattern.compile("(\\d{1,2})\\.(\\d{1,2})\\.(\\d{2,4})")
     )
 
@@ -49,7 +49,7 @@ object ReceiptPatterns {
         Pattern.compile("(?:Bill|Transaction)\\s*(?:No|ID|#)?[:\\s]*([A-Za-z0-9/-]{3,20})", Pattern.CASE_INSENSITIVE)
     )
     
-    val datePrefixRegex = Regex("(?i)^(dated?|dt)[:\\s]+")
+    val datePrefixRegex = Regex("(?i)^(dated?|dt|invoice date|bill date|txn date)[:\\s]+")
 }
 
 
@@ -593,8 +593,18 @@ class ReceiptParser {
     private fun extractDate(text: String): Pair<Date, Boolean> {
         Log.d(tag, "extractDate | Step 1: Scanning for date patterns")
 
+        // First, filter out lines containing Mfg or Expiry dates to avoid false positives
+        val filteredText = text.lines()
+            .filter { line -> 
+                val lower = line.lowercase()
+                !lower.contains("mfg") && !lower.contains("manufacturing") && 
+                !lower.contains("exp") && !lower.contains("expiry") &&
+                !lower.contains("best before") && !lower.contains("dob")
+            }
+            .joinToString("\n")
+
         for (pattern in ReceiptPatterns.datePatterns) {
-            val matcher = pattern.matcher(text)
+            val matcher = pattern.matcher(filteredText)
             while (matcher.find()) {
                 try {
                     val rawDateStr = matcher.group(0) ?: continue

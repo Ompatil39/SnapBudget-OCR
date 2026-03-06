@@ -11,6 +11,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+import android.widget.EditText
+import android.widget.FrameLayout
 import com.snapbudget.ocr.R
 import com.snapbudget.ocr.data.db.AppDatabase
 import com.snapbudget.ocr.data.repository.TransactionRepository
@@ -33,11 +36,64 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupUserProfile()
         setupClickListeners()
         setupOcrModeSelector()
     }
 
+    private fun setupUserProfile() {
+        val user = FirebaseAuth.getInstance().currentUser
+        val prefs = requireContext().getSharedPreferences("snapbudget_prefs", Context.MODE_PRIVATE)
+        val defaultName = user?.displayName ?: "SnapBudget User"
+        val userName = prefs.getString("user_name", defaultName) ?: "SnapBudget User"
+        
+        binding.tvUserName.text = userName
+        binding.tvUserEmail.text = user?.email ?: "v1.0"
+    }
+
+    private fun showEditNameDialog() {
+        val prefs = requireContext().getSharedPreferences("snapbudget_prefs", Context.MODE_PRIVATE)
+        val currentName = binding.tvUserName.text.toString()
+
+        val input = EditText(requireContext())
+        input.setText(currentName)
+        input.setSelection(currentName.length)
+        input.isSingleLine = true
+
+        val container = FrameLayout(requireContext())
+        val params = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        params.leftMargin = resources.getDimensionPixelSize(R.dimen.spacing_5)
+        params.rightMargin = resources.getDimensionPixelSize(R.dimen.spacing_5)
+        input.layoutParams = params
+        container.addView(input)
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Edit Username")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    // Update SharedPreferences
+                    prefs.edit().putString("user_name", newName).apply()
+                    binding.tvUserName.text = newName
+                    
+                    // Update Firebase
+                    val user = FirebaseAuth.getInstance().currentUser
+                    val profileUpdates = UserProfileChangeRequest.Builder()
+                        .setDisplayName(newName)
+                        .build()
+                    user?.updateProfile(profileUpdates)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun setupClickListeners() {
+        binding.cardUserProfile.setOnClickListener {
+            showEditNameDialog()
+        }
+
         binding.rowExport.setOnClickListener {
             Toast.makeText(requireContext(), "Export coming soon", Toast.LENGTH_SHORT).show()
         }

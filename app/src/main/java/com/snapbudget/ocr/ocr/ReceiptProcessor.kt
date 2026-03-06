@@ -43,7 +43,9 @@ class ReceiptProcessor(
         // Anomaly detection (§10)
         val anomalyIssues: List<String> = emptyList(),
         // Confidence estimation (§12)
-        val needsUserConfirmation: Boolean = false
+        val needsUserConfirmation: Boolean = false,
+        // Line items extracted from receipt
+        val lineItems: List<ReceiptParser.LineItem> = emptyList()
     )
 
     suspend fun processReceipt(bitmap: Bitmap): ProcessingResult? {
@@ -137,7 +139,7 @@ class ReceiptProcessor(
         Log.d(tag, "processOcrResult | Step 2: Parsing complete - merchant='${parsedReceipt.merchantName}', amount=${parsedReceipt.totalAmount}")
 
         // Validate extracted data
-        val validationResult = receiptValidator.validate(parsedReceipt)
+        var validationResult = receiptValidator.validate(parsedReceipt)
         Log.d(tag, "processOcrResult | Step 3: Validation - valid=${validationResult.isValid}, issues=${validationResult.issues}")
 
         var finalMerchantName = parsedReceipt.merchantName
@@ -147,37 +149,68 @@ class ReceiptProcessor(
         var finalConfidence = parsedReceipt.overallConfidence
         val finalConfidenceScores = parsedReceipt.confidenceScores.toMutableMap()
 
-        // HYBRID mode: use Groq AI for correction when confidence is low
-        if (mode == OcrPipelineMode.HYBRID &&
-            (finalConfidence < 0.6f || finalTotalAmount <= 0.0 || finalMerchantName == "Unknown Merchant")
-        ) {
-            Log.d(tag, "processOcrResult | Step 4: HYBRID — low confidence ($finalConfidence), calling Groq AI...")
-            val aiResult = groqAiService.correctAndCategorize(rawText)
-            if (aiResult != null) {
-                if (aiResult.merchantName != null) {
-                    finalMerchantName = aiResult.merchantName
-                    finalConfidenceScores["merchant"] = 0.9f
-                }
-                if (aiResult.totalAmount != null) {
-                    finalTotalAmount = aiResult.totalAmount
-                    finalConfidenceScores["amount"] = 0.9f
-                }
-                if (aiResult.gstNumber != null) {
-                    finalGstNumber = aiResult.gstNumber
-                    finalConfidenceScores["gst"] = 0.9f
-                }
-                if (aiResult.date != null) {
-                    val aiDate = receiptParser.parseDateString(aiResult.date)
-                    if (aiDate != null) {
-                        finalDate = aiDate
-                        finalConfidenceScores["date"] = 0.9f
+        // HYBRID mode: use Groq AI for correction when extraction quality is questionable
+        if (mode == OcrPipelineMode.HYBRID) {
+            val dateNotExtracted = !parsedReceipt.dateExtractedFromText
+            val merchantWeak = finalMerchantName == "Unknown Merchant" ||
+                               finalMerchantName == "Unknown" ||
+                               finalMerchantName.length < 3
+            val amountMissing = finalTotalAmount <= 0.0
+            val confidenceLow = finalConfidence < 0.75f
+            val hasValidationErrors = !validationResult.isValid
+
+            val shouldCallAi = confidenceLow || amountMissing || merchantWeak || dateNotExtracted || hasValidationErrors
+
+            Log.d(tag, "processOcrResult | Step 4: HYBRID trigger check — " +
+                "confidence=$finalConfidence(low=$confidenceLow), " +
+                "amount=$finalTotalAmount(missing=$amountMissing), " +
+                "merchant='$finalMerchantName'(weak=$merchantWeak), " +
+                "dateExtracted=${parsedReceipt.dateExtractedFromText}(notExtracted=$dateNotExtracted), " +
+                "validationErrors=$hasValidationErrors, " +
+                "RESULT=$shouldCallAi")
+
+            if (shouldCallAi) {
+                Log.d(tag, "processOcrResult | Step 4: HYBRID — calling Groq AI for correction...")
+                val aiResult = groqAiService.correctAndCategorize(rawText)
+                if (aiResult != null) {
+                    Log.d(tag, "processOcrResult | Step 4: Groq response — merchant='${aiResult.merchantName}', amount=${aiResult.totalAmount}, date='${aiResult.date}', confidence=${aiResult.confidence}")
+                    if (aiResult.merchantName != null) {
+                        finalMerchantName = aiResult.merchantName
+                        finalConfidenceScores["merchant"] = 0.9f
                     }
+                    if (aiResult.totalAmount != null) {
+                        finalTotalAmount = aiResult.totalAmount
+                        finalConfidenceScores["amount"] = 0.9f
+                    }
+                    if (aiResult.gstNumber != null) {
+                        finalGstNumber = aiResult.gstNumber
+                        finalConfidenceScores["gst"] = 0.9f
+                    }
+                    if (aiResult.date != null) {
+                        val aiDate = receiptParser.parseDateString(aiResult.date)
+                        if (aiDate != null) {
+                            finalDate = aiDate
+                            finalConfidenceScores["date"] = 0.9f
+                        }
+                    }
+                    finalConfidence = maxOf(finalConfidence, aiResult.confidence)
+                    finalConfidenceScores["ai_groq_hybrid"] = 1.0f
+                    Log.d(tag, "processOcrResult | Step 4: Groq HYBRID success — merchant='$finalMerchantName', amount=₹$finalTotalAmount, date=$finalDate")
+
+                    // Re-validate with the updated AI data so AI-fixed issues don't linger
+                    val updatedReceipt = parsedReceipt.copy(
+                        merchantName = finalMerchantName,
+                        totalAmount = finalTotalAmount,
+                        date = finalDate,
+                        gstNumber = finalGstNumber
+                    )
+                    validationResult = receiptValidator.validate(updatedReceipt)
+                    Log.d(tag, "processOcrResult | Step 4: Re-validation after AI - valid=${validationResult.isValid}, issues=${validationResult.issues}")
+                } else {
+                    Log.w(tag, "processOcrResult | Step 4: Groq HYBRID call returned null, using offline result")
                 }
-                finalConfidence = maxOf(finalConfidence, aiResult.confidence)
-                finalConfidenceScores["ai_groq_hybrid"] = 1.0f
-                Log.d(tag, "processOcrResult | Step 4: Groq HYBRID success — merchant='$finalMerchantName', amount=₹$finalTotalAmount")
             } else {
-                Log.w(tag, "processOcrResult | Step 4: Groq HYBRID call failed, using offline result")
+                Log.d(tag, "processOcrResult | Step 4: HYBRID — all fields above threshold, skipping AI call")
             }
         } else if (mode == OcrPipelineMode.OFFLINE) {
             Log.d(tag, "processOcrResult | Step 4: OFFLINE mode — no AI fallback")
@@ -275,7 +308,8 @@ class ReceiptProcessor(
             duplicateConfidenceLabel = duplicateLabel,
             receiptType = parsedReceipt.receiptType.displayName,
             anomalyIssues = parsedReceipt.anomalyIssues,
-            needsUserConfirmation = needsConfirmation
+            needsUserConfirmation = needsConfirmation,
+            lineItems = parsedReceipt.lineItems
         )
     }
 
@@ -307,6 +341,17 @@ class ReceiptProcessor(
 
         Log.d(tag, "processWithCloudAi | Success — merchant='$merchantName', amount=₹$amount, category=${finalCategory.name}")
 
+        // Convert AI line items to ReceiptParser.LineItem format
+        val lineItems = aiResult.items.map { aiItem ->
+            ReceiptParser.LineItem(
+                name = aiItem.name,
+                quantity = aiItem.quantity,
+                unitPrice = aiItem.unitPrice,
+                totalPrice = aiItem.totalPrice
+            )
+        }
+        Log.d(tag, "processWithCloudAi | Extracted ${lineItems.size} line items")
+
         return ProcessingResult(
             transaction = transaction,
             rawOcrText = "[Cloud AI OCR]",
@@ -315,7 +360,8 @@ class ReceiptProcessor(
             validationIssues = emptyList(),
             imagePath = imagePath,
             receiptType = aiResult.category ?: "Unknown",
-            needsUserConfirmation = aiResult.confidence < 0.65f
+            needsUserConfirmation = aiResult.confidence < 0.65f,
+            lineItems = lineItems
         )
     }
 

@@ -18,6 +18,7 @@ import com.snapbudget.ocr.data.model.Category
 import com.snapbudget.ocr.data.model.Transaction
 import com.snapbudget.ocr.data.repository.TransactionRepository
 import com.snapbudget.ocr.categorization.CategoryClassifier
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.snapbudget.ocr.databinding.ActivityReceiptPreviewBinding
 import com.snapbudget.ocr.ocr.ReceiptProcessor
 import kotlinx.coroutines.launch
@@ -174,6 +175,19 @@ class ReceiptPreviewActivity : AppCompatActivity() {
                     currentTransaction = result.transaction
                     populateFields(result.transaction)
                     
+                    // Show line items
+                    if (result.lineItems.isNotEmpty()) {
+                        binding.cardLineItems.visibility = View.VISIBLE
+                        binding.chipItemCount.text = result.lineItems.size.toString()
+                        binding.rvLineItems.layoutManager = LinearLayoutManager(this@ReceiptPreviewActivity)
+                        binding.rvLineItems.adapter = LineItemAdapter(result.lineItems)
+                        
+                        val subtotal = result.lineItems.sumOf { it.totalPrice }
+                        binding.tvItemsSubtotal.text = "₹%.2f".format(subtotal)
+                    } else {
+                        binding.cardLineItems.visibility = View.GONE
+                    }
+
                     // Show validation warnings if any
                     if (result.validationIssues.isNotEmpty()) {
                         Log.d("STEP_BY_STEP", "9a. Validation issues found: ${result.validationIssues.size}")

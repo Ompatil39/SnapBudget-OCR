@@ -33,13 +33,21 @@ class GroqAiService {
 
     // ─── Result ──────────────────────────────────────────────────────────
 
+    data class AiLineItem(
+        val name: String,
+        val quantity: Int = 1,
+        val unitPrice: Double = 0.0,
+        val totalPrice: Double = 0.0
+    )
+
     data class AiResult(
         val merchantName: String? = null,
         val totalAmount: Double? = null,
         val date: String? = null,
         val gstNumber: String? = null,
         val category: String? = null,
-        val confidence: Float = 0.8f
+        val confidence: Float = 0.8f,
+        val items: List<AiLineItem> = emptyList()
     )
 
     // ─── HYBRID mode ─────────────────────────────────────────────────────
@@ -49,7 +57,11 @@ class GroqAiService {
      * Returns null on error (caller should fall back to offline result).
      */
     suspend fun correctAndCategorize(rawOcrText: String): AiResult? {
-        if (apiKey.isBlank()) return null
+        if (apiKey.isBlank()) {
+            Log.w(TAG, "correctAndCategorize: GROQ_API_KEY is blank — cannot call AI. Check .env and rebuild.")
+            return null
+        }
+        Log.d(TAG, "correctAndCategorize: Starting Groq AI call (model=$textModel, textLen=${rawOcrText.length})")
 
         val prompt = """
             You are an expert Indian receipt extraction AI.
@@ -63,7 +75,10 @@ class GroqAiService {
               "date": "DD/MM/YYYY or null",
               "gst_number": "String or null",
               "category": "one of: Food, Grocery, Shopping, Health, Travel, Entertainment, Utilities, Others",
-              "confidence": Number (0.0-1.0)
+              "confidence": Number (0.0-1.0),
+              "items": [
+                {"name": "String", "quantity": Number, "unit_price": Number, "total_price": Number}
+              ]
             }
 
             Rules:
@@ -71,6 +86,9 @@ class GroqAiService {
             2. Total = final payable amount. NOT cash tendered or change.
             3. GST must be exactly 15 chars matching Indian format.
             4. Category must be one of the 8 listed values.
+            5. Date MUST be the transaction, billing, or invoice date. EXPLICITLY IGNORE manufacturing (Mfg) and expiry dates.
+            6. Extract ALL individual items/products listed on the receipt with their quantity, unit price, and line total.
+               If quantity is not specified, assume 1. If unit_price is not clear, use total_price.
 
             RAW OCR TEXT:
             $rawOcrText
@@ -86,7 +104,11 @@ class GroqAiService {
      * Returns null on error.
      */
     suspend fun ocrAndParse(bitmap: Bitmap): AiResult? {
-        if (apiKey.isBlank()) return null
+        if (apiKey.isBlank()) {
+            Log.w(TAG, "ocrAndParse: GROQ_API_KEY is blank — cannot call AI. Check .env and rebuild.")
+            return null
+        }
+        Log.d(TAG, "ocrAndParse: Starting Groq Vision AI call (model=$visionModel, img=${bitmap.width}x${bitmap.height})")
 
         val base64 = bitmapToBase64(bitmap)
 
@@ -106,9 +128,12 @@ class GroqAiService {
                       "date": "DD/MM/YYYY or null",
                       "gst_number": "String or null",
                       "category": "one of: Food, Grocery, Shopping, Health, Travel, Entertainment, Utilities, Others",
-                      "confidence": Number (0.0-1.0)
+                      "confidence": Number (0.0-1.0),
+                      "items": [
+                        {"name": "String", "quantity": Number, "unit_price": Number, "total_price": Number}
+                      ]
                     }
-                    Rules: Total = final payable. GST = 15 chars Indian format. Category must be one of the 8 values.
+                    Rules: Total = final payable. GST = 15 chars Indian format. Category must be one of the 8 values. Date must be the transaction/invoice date (ignore mfg/expiry dates). Extract ALL individual items/products with quantity, unit price, and line total.
                 """.trimIndent())
             })
             put(JSONObject().apply {
@@ -131,7 +156,7 @@ class GroqAiService {
                 put(userMsg)
             })
             put("temperature", 0.1)
-            put("max_tokens", 512)
+            put("max_tokens", 1024)
         }
 
         return callApi(body)
@@ -153,7 +178,7 @@ class GroqAiService {
                 })
             })
             put("temperature", 0.1)
-            put("max_tokens", 512)
+            put("max_tokens", 1024)
         }
 
         return callApi(body)
@@ -161,6 +186,8 @@ class GroqAiService {
 
     private suspend fun callApi(body: JSONObject): AiResult? = withContext(Dispatchers.IO) {
         try {
+            val model = body.optString("model", "unknown")
+            Log.d(TAG, "callApi: Sending request to Groq (model=$model, endpoint=$endpoint)")
             val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 setRequestProperty("Authorization", "Bearer $apiKey")
@@ -206,13 +233,35 @@ class GroqAiService {
 
             val json = JSONObject(clean)
 
+            // Parse line items array
+            val items = mutableListOf<AiLineItem>()
+            val itemsArray = json.optJSONArray("items")
+            if (itemsArray != null) {
+                for (i in 0 until itemsArray.length()) {
+                    try {
+                        val itemObj = itemsArray.getJSONObject(i)
+                        val name = itemObj.optString("name", "").trim()
+                        if (name.isNotBlank()) {
+                            val qty = itemObj.optInt("quantity", 1).coerceAtLeast(1)
+                            val unitPrice = itemObj.optDouble("unit_price", 0.0)
+                            val totalPrice = itemObj.optDouble("total_price", unitPrice * qty)
+                            items.add(AiLineItem(name, qty, unitPrice, totalPrice))
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to parse item at index $i", e)
+                    }
+                }
+                Log.d(TAG, "parseAiResponse: Parsed ${items.size} line items")
+            }
+
             AiResult(
                 merchantName = json.optString("merchant_name", "").takeIf { it.isNotBlank() && it != "null" },
                 totalAmount = json.optDouble("total_amount", 0.0).takeIf { it > 0.0 },
                 date = json.optString("date", "").takeIf { it.isNotBlank() && it != "null" },
                 gstNumber = json.optString("gst_number", "").takeIf { it.isNotBlank() && it != "null" && it.length == 15 },
                 category = json.optString("category", "").takeIf { it.isNotBlank() && it != "null" },
-                confidence = json.optDouble("confidence", 0.8).toFloat()
+                confidence = json.optDouble("confidence", 0.8).toFloat(),
+                items = items
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse Groq response: $raw", e)

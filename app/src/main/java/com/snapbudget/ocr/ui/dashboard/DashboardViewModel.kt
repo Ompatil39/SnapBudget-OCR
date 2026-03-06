@@ -9,13 +9,20 @@ import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.PieEntry
 import com.snapbudget.ocr.data.model.Transaction
 import com.snapbudget.ocr.data.repository.TransactionRepository
+import android.content.SharedPreferences
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class DashboardViewModel(private val repository: TransactionRepository) : ViewModel() {
+class DashboardViewModel(
+    private val repository: TransactionRepository,
+    private val prefs: SharedPreferences
+) : ViewModel() {
 
     private val _monthlyTotal = MutableLiveData<Double>()
     val monthlyTotal: LiveData<Double> = _monthlyTotal
+
+    private val _monthlyBudget = MutableLiveData<Double>()
+    val monthlyBudget: LiveData<Double> = _monthlyBudget
 
     private val _categoryBreakdown = MutableLiveData<Map<String, Double>>()
     val categoryBreakdown: LiveData<Map<String, Double>> = _categoryBreakdown
@@ -44,6 +51,9 @@ class DashboardViewModel(private val repository: TransactionRepository) : ViewMo
             val year = calendar.get(Calendar.YEAR)
             val month = calendar.get(Calendar.MONTH)
             
+            val budget = prefs.getFloat("monthly_budget", 0f).toDouble()
+            _monthlyBudget.value = budget
+            
             // Load monthly total
             val total = repository.getTotalExpensesForMonth(year, month)
             _monthlyTotal.value = total
@@ -65,6 +75,9 @@ class DashboardViewModel(private val repository: TransactionRepository) : ViewMo
     fun loadDataForMonth(year: Int, month: Int) {
         viewModelScope.launch {
             _isLoading.value = true
+            
+            val budget = prefs.getFloat("monthly_budget", 0f).toDouble()
+            _monthlyBudget.value = budget
             
             val total = repository.getTotalExpensesForMonth(year, month)
             _monthlyTotal.value = total
@@ -90,11 +103,14 @@ class DashboardViewModel(private val repository: TransactionRepository) : ViewMo
     }
 
 
-    class Factory(private val repository: TransactionRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: TransactionRepository,
+        private val prefs: SharedPreferences
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
-                return DashboardViewModel(repository) as T
+                return DashboardViewModel(repository, prefs) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

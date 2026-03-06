@@ -51,13 +51,17 @@ class MainActivity : AppCompatActivity() {
             .setRestoreState(true)
             .build()
 
+        // Handle FAB camera button click
+        binding.fabCamera.setOnClickListener {
+            startActivity(Intent(this, CameraActivity::class.java))
+        }
+
         // Handle bottom nav item selection
         binding.bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_camera -> {
-                    // Center camera button — launch CameraActivity, don't switch tabs
-                    startActivity(Intent(this, CameraActivity::class.java))
-                    false // Return false so the Camera tab is never visually selected
+                    // Do nothing, handled by FAB
+                    false
                 }
                 else -> {
                     // Standard fragment switching via NavigationUI

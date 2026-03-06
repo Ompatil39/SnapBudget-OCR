@@ -27,6 +27,7 @@ class GenerativeAiFallbackService(private val context: Context) {
                 {
                     "merchant_name": "String",
                     "total_amount": Number,
+                    "date": "DD/MM/YYYY or null",
                     "gst_number": "String or null",
                     "confidence_score": Number (between 0.0 and 1.0)
                 }
@@ -35,7 +36,8 @@ class GenerativeAiFallbackService(private val context: Context) {
                 1. Fix obvious OCR spelling mistakes for Indian chains (e.g. DMart, Domino's, Reliance).
                 2. Total Amount should be the final payable amount containing decimals. Exclude "cash tendered" or "change".
                 3. GST number must be exactly 15 characters, conforming to Indian GST format (2 digits, 5 chars, 4 digits, 1 char, 1 char, Z, 1 char).
-                4. DO NOT wrap JSON in code blocks. Just return the raw JSON object.
+                4. Date MUST be the transaction, billing, or invoice date. EXPLICITLY IGNORE manufacturing (mfg) and expiry dates.
+                5. DO NOT wrap JSON in code blocks. Just return the raw JSON object.
 
                 RAW OCR TEXT:
                 $rawText
@@ -51,6 +53,7 @@ class GenerativeAiFallbackService(private val context: Context) {
             AiFallbackResult(
                 merchantName = json.optString("merchant_name", "").takeIf { it.isNotEmpty() && it != "null" },
                 totalAmount = json.optDouble("total_amount", 0.0).takeIf { it > 0.0 },
+                date = json.optString("date", "").takeIf { it.isNotEmpty() && it != "null" },
                 gstNumber = json.optString("gst_number", "").takeIf { it.isNotEmpty() && it != "null" && it.length == 15 },
                 confidenceScore = json.optDouble("confidence_score", 0.8).toFloat()
             )
@@ -63,6 +66,7 @@ class GenerativeAiFallbackService(private val context: Context) {
     data class AiFallbackResult(
         val merchantName: String?,
         val totalAmount: Double?,
+        val date: String?,
         val gstNumber: String?,
         val confidenceScore: Float
     )

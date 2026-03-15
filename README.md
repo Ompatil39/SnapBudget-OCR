@@ -96,7 +96,3 @@ git clone https://github.com/your-username/snapbudget-ocr
 
 ---
 
-
-## License
-
-MIT License · Built at **HackArena'26** by Team **CodeX** · Theme: FinTech · Problem ID: FM-01
